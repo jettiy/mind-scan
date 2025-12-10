@@ -334,9 +334,15 @@ elif st.session_state.step == 2:
     # [광고 A]
     st.caption("AI가 데이터를 심층 분석 중입니다...")
     components.html("""
-        <div style="display: flex; justify-content: center; align-items: center; height: 250px; background-color: #f8f9fa; border: 2px dashed #ddd; border-radius: 15px; color: #aaa; font-family: sans-serif;">
-            <p>📢 Google AdSense Area</p>
-        </div>
+       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
+     crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:300px;height:250px"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXX"
+         data-ad-slot="YYYYYYYYYY"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
     """, height=260)
 
     if not st.session_state.analysis_result:
@@ -408,9 +414,15 @@ elif st.session_state.step == 3.5:
     if not st.session_state.scenarios:
         # [광고 B]
         components.html("""
-            <div style="display: flex; justify-content: center; align-items: center; height: 100px; background-color: #f8f9fa; border: 2px dashed #ddd; border-radius: 15px; color: #aaa;">
-                <p>📢 Small Banner Ad</p>
-            </div>
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
+     crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:300px;height:250px"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXX"
+         data-ad-slot="YYYYYYYYYY"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
         """, height=110)
         
         with st.spinner("🔄 AI가 상황을 분석하여 가능성을 도출 중입니다..."):
