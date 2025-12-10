@@ -12,6 +12,12 @@ from typing import Dict, List, Optional
 import re
 
 # ==========================================
+# [설정] 광고 ID (CEO님 코드 적용 완료)
+# ==========================================
+ADSENSE_CLIENT_ID = "ca-pub-5407905053449158"
+ADSENSE_SLOT_ID = "7042015443"
+
+# ==========================================
 # 설정 관리 클래스
 # ==========================================
 class MindScanConfig:
@@ -106,7 +112,7 @@ class AnalysisResult:
     def __init__(self):
         self.profile: Dict = {}
         self.scenarios: Dict[str, str] = {}
-        self.general_analysis: str = "" # [NEW] 전체 상황 분석 추가
+        self.general_analysis: str = "" 
         self.selected_scenario: str = ""
         
     def parse_profile(self, raw_text: str) -> Dict:
@@ -140,7 +146,7 @@ class SessionManager:
             'analysis_result': "",
             'context_image': None,
             'scenarios': {},
-            'general_analysis': "", # [NEW]
+            'general_analysis': "",
             'selected_scenario': "",
             'target_relation': "",
             'target_name': "",
@@ -160,14 +166,6 @@ class SessionManager:
             del st.session_state[key]
         self._init_session()
 
-# --- Streamlit 페이지 설정 ---
-st.set_page_config(
-    page_title="마인드 스캔 (Mind Scan)",
-    page_icon="🧠",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
 # --- 전역 설정 ---
 config = MindScanConfig()
 ai_manager = AIModelManager(config)
@@ -178,31 +176,18 @@ session_manager = SessionManager()
 # ==========================================
 st.markdown(f"""
 <style>
-    /* 전체 배경 및 폰트 */
     .stApp {{ 
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
         color: #333;
     }}
-    
-    /* 메인 컨테이너 */
     .block-container {{
-        padding-top: 2rem;
-        padding-bottom: 50px;
-        max-width: 600px;
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        min-height: 95vh;
-        margin: 0 auto;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.2);
+        padding-top: 2rem; padding-bottom: 50px; max-width: 600px;
+        background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1); min-height: 95vh; margin: 0 auto;
+        border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);
     }}
-
-    /* 헤더 숨기기 */
     header {{visibility: hidden;}}
-    
-    /* 말풍선 디자인 */
     .stChatMessage {{ padding: 10px 0; border: none; background: none; margin-bottom: 8px; }}
     .stChatMessage[data-testid="stChatMessage"]:nth-child(odd) div[data-testid="stChatMessageContent"] {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -213,81 +198,63 @@ st.markdown(f"""
         background-color: #F8F9FA; border-radius: 18px 18px 18px 4px; padding: 14px 18px; color: #333;
         border: 1px solid #E9ECEF; font-weight: 500; line-height: 1.5;
     }}
-
-    /* 입력창 스타일 */
-    .stChatInputContainer {{
-        background-color: #FFFFFF; padding: 15px 0 5px 0; border-top: 1px solid #E9ECEF;
-    }}
-    
-    /* 버튼 스타일 */
+    .stChatInputContainer {{ background-color: #FFFFFF; padding: 15px 0 5px 0; border-top: 1px solid #E9ECEF; }}
     .stButton > button {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;
         border-radius: 12px; padding: 12px 24px; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         transition: all 0.3s ease; width: 100%;
     }}
-    .stButton > button:hover {{
-        transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); color: white;
+    .stButton > button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); color: white; }}
+    .stTextInput > div > div > input, .stSelectbox > div > div > select, .stDateInput > div > div > input {{
+        border-radius: 12px; border: 2px solid #E9ECEF; padding: 12px; font-size: 16px; transition: border-color 0.3s ease;
     }}
-
-    /* 공유 카드 디자인 */
+    .stTextInput > div > div > input:focus, .stSelectbox > div > div > select:focus, .stDateInput > div > div > input:focus {{
+        border-color: #667eea; outline: none;
+    }}
     .share-card {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white; padding: 30px 20px; border-radius: 20px; text-align: center;
         margin: 30px 0; box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3); position: relative; overflow: hidden;
     }}
+    .share-card::before {{
+        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: shimmer 3s infinite;
+    }}
+    @keyframes shimmer {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+    .share-card h3 {{ color: #fff; margin: 0 0 15px 0; font-size: 1.5rem; font-weight: 800; position: relative; z-index: 1; }}
     .share-card .highlight {{
         background-color: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
-        padding: 20px; border-radius: 15px; margin: 20px 0; font-weight: 600; font-size: 1rem; line-height: 1.6;
+        padding: 20px; border-radius: 15px; margin: 20px 0; font-weight: 600; font-size: 1rem; line-height: 1.6; position: relative; z-index: 1;
     }}
-    .qr-img {{ width: 100px; height: 100px; margin-top: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }}
-    
-    /* [수정] 시나리오 박스 (가로 배치용) */
+    .qr-img {{ width: 100px; height: 100px; margin-top: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); position: relative; z-index: 1; }}
+    .share-footer {{ font-size: 0.8rem; color: rgba(255,255,255,0.8); margin-top: 15px; position: relative; z-index: 1; }}
     .scenario-box {{
-        background: white;
-        border: 1px solid #E9ECEF;
-        border-radius: 15px;
-        padding: 20px; 
-        margin-bottom: 10px; 
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        color: #333;
-        min-height: 250px; /* 높이 맞춰줌 */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+        background: white; border: 1px solid #E9ECEF; border-radius: 15px; padding: 20px; margin-bottom: 10px; 
+        cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        color: #333; min-height: 250px; display: flex; flex-direction: column; justify-content: space-between;
     }}
-    .scenario-box:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
-        border-color: #667eea;
-    }}
-    .scenario-title {{
-        font-weight: 800; font-size: 1.1rem; color: #667eea; margin-bottom: 10px;
-    }}
-    .scenario-desc {{
-        font-size: 0.95rem; color: #555; line-height: 1.6; flex-grow: 1;
-    }}
-    
-    /* 타이틀 스타일 */
-    .main-title {{
-        text-align: center; color: #333; font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }}
-    .subtitle {{
-        text-align: center; color: #666; font-size: 1rem; margin-bottom: 30px; font-weight: 500;
-    }}
-    
-    /* 진행 바 */
+    .scenario-box:hover {{ transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15); border-color: #667eea; }}
+    .scenario-title {{ font-weight: 800; font-size: 1.1rem; color: #667eea; margin-bottom: 10px; }}
+    .scenario-desc {{ font-size: 0.95rem; color: #555; line-height: 1.6; flex-grow: 1; }}
+    .info-card {{ background: white; border-radius: 15px; padding: 20px; margin: 15px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid #E9ECEF; }}
     .progress-container {{ background-color: #E9ECEF; border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }}
     .progress-bar {{ background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); height: 100%; border-radius: 10px; transition: width 0.5s ease; }}
+    .main-title {{
+        text-align: center; color: #333; font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }}
+    .subtitle {{ text-align: center; color: #666; font-size: 1rem; margin-bottom: 30px; font-weight: 500; }}
 </style>
 """, unsafe_allow_html=True)
 
 # --- 헤더 및 진행 바 ---
 st.markdown('<h1 class="main-title">🧠 마인드 스캔</h1>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">AI Relationship Analysis Lab</p>', unsafe_allow_html=True)
+
+# [애드센스] 헤더 스크립트 (사이트 검토 통과용)
+components.html(f"""
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT_ID}" crossorigin="anonymous"></script>
+""", height=0)
 
 progress_map = {1: 25, 2: 50, 3: 75, 3.5: 85, 4: 100}
 current_progress = progress_map.get(st.session_state.step, 0)
@@ -325,45 +292,32 @@ if st.session_state.step == 1:
                 st.rerun()
 
 # ==========================================
-# [2단계] 성향 분석 (사주 엔진 -> 심리학 번역)
+# [2단계] 성향 분석 (결과 -> 광고 순서 적용)
 # ==========================================
 elif st.session_state.step == 2:
     name = st.session_state.target_name
     st.markdown(f'<h2 style="color: #333; margin-bottom: 30px;">Step 2. {name}님 성향 리포트</h2>', unsafe_allow_html=True)
 
-    # [광고 A]
-    st.caption("AI가 데이터를 심층 분석 중입니다...")
-    components.html("""
-       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
-     crossorigin="anonymous"></script>
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:300px;height:250px"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXX"
-         data-ad-slot="YYYYYYYYYY"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-    """, height=260)
-
     if not st.session_state.analysis_result:
         with st.spinner("🔄 사주/점성술 데이터를 현대 심리학으로 해석 중..."):
             try:
-                # [핵심] 사주 엔진 -> 심리학 표현 프롬프트
                 prompt = f"""
                 당신은 사주명리학과 점성술에 정통한 고수이자, 이를 현대 심리학 용어로 완벽하게 번역하는 프로파일러입니다.
-                
                 [대상] {name}({st.session_state.target_gender}), {st.session_state.target_birth}({st.session_state.target_calendar})
                 [관계] {st.session_state.target_relation}
-                
                 [분석 미션]
-                1. (Internal): 사주(오행, 십성, 격국)와 점성술(별자리, 행성 배치)을 정밀하게 분석하세요.
-                2. (Output): **절대 사주 용어(갑목, 역마살 등)를 쓰지 마세요.** 대신 일반인이 이해하기 쉬운 **성격 키워드, 행동 패턴, 심리적 기제**로 표현하세요.
-                3. 말투는 전문적이지만 따뜻하고 이해하기 쉽게 작성하세요.
+                1. 사주(오행, 십성)와 점성술을 정밀 분석하세요.
+                2. **절대 전문 용어(갑목, 역마살 등)를 쓰지 마세요.** 이해하기 쉬운 성격 키워드와 행동 패턴으로 표현하세요.
+                3. **반드시 줄바꿈과 마크다운을 사용하여 가독성을 높이세요.**
+                [출력 형식]
+                **✨ 타고난 기질**
+                (내용)
                 
-                [출력 형식 (반드시 지킬 것)]
-                **타고난 기질**: [핵심 성격을 한 문장으로 명쾌하게]
-                **소통 스타일**: [대화 방식과 선호하는 소통법을 한 문장으로]
-                **공략 포인트**: [관계를 좋게 만드는 결정적 팁 한 문장으로]
+                **🗣️ 소통 스타일**
+                (내용)
+                
+                **💘 공략 포인트**
+                (내용)
                 """
                 response = ai_manager.generate_response(prompt)
                 st.session_state.analysis_result = response
@@ -372,9 +326,25 @@ elif st.session_state.step == 2:
                 st.error(f"❌ 분석 실패: {str(e)}")
 
     if st.session_state.analysis_result:
+        # [수정] 텍스트 결과 먼저 표시
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         st.markdown(st.session_state.analysis_result)
         st.markdown('</div>', unsafe_allow_html=True)
+        
+        # [수정] 그 아래에 광고 표시
+        components.html(f"""
+            <div style="display: flex; justify-content: center;">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT_ID}"
+                     crossorigin="anonymous"></script>
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:250px"
+                     data-ad-client="{ADSENSE_CLIENT_ID}"
+                     data-ad-slot="{ADSENSE_SLOT_ID}"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({{}});
+                </script>
+            </div>
+        """, height=260)
         
         col1, col2 = st.columns(2)
         with col1:
@@ -406,105 +376,74 @@ elif st.session_state.step == 3:
             st.rerun()
 
 # ==========================================
-# [3.5단계] 상황 정밀 진단 (레이아웃 개선)
+# [3.5단계] 상황 정밀 진단 (결과 -> 광고 -> 시나리오)
 # ==========================================
 elif st.session_state.step == 3.5:
     st.markdown('<h2 style="color: #333; margin-bottom: 30px;">🕵️‍♂️ 상황 진단 리포트</h2>', unsafe_allow_html=True)
 
     if not st.session_state.scenarios:
-        # [광고 B]
-        components.html("""
-            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
-     crossorigin="anonymous"></script>
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:300px;height:250px"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXX"
-         data-ad-slot="YYYYYYYYYY"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-        """, height=110)
-        
         with st.spinner("🔄 AI가 상황을 분석하여 가능성을 도출 중입니다..."):
             try:
-                # [수정] 통합 분석 + 2가지 시나리오 프롬프트
                 prompt = f"""
-                당신은 관계 분석 전문가입니다. 
-                
-                [정보]
-                - 프로필: {st.session_state.analysis_result}
-                - 상황: {st.session_state.context_text}
-                
-                [미션]
-                1. 먼저 이 상황에 대한 **[종합 분석]**을 3~4문장으로 서술하세요. (객관적 상황 판단)
-                2. 그 후, 가장 유력한 **2가지 가능성(시나리오)**를 제시하세요.
-                
-                [출력 형식 (형식을 엄격히 지켜주세요)]
+                당신은 관계 분석 전문가입니다. [정보] 프로필:{st.session_state.analysis_result}, 상황:{st.session_state.context_text}
+                [미션] 1. [종합 분석] 3~4문장 서술. 2. 유력한 2가지 시나리오 제시.
+                **가독성을 위해 문단 사이에 줄바꿈을 넣어주세요.**
+                [형식]
                 [종합 분석]
-                (여기에 전체적인 상황 분석 내용을 적어주세요.)
-                
+                (내용)
                 ##A##
                 [시나리오 A 제목]
-                (심리적/내면적 원인 중심의 설명. 3문장 이내)
-                
+                (심리적 원인 3문장)
                 ##B##
                 [시나리오 B 제목]
-                (현실적/상황적 원인 중심의 설명. 3문장 이내)
+                (현실적 원인 3문장)
                 """
-                
                 response = ai_manager.generate_response(prompt, st.session_state.context_image)
                 
-                # 파싱 로직
                 if "##A##" in response and "##B##" in response:
-                    # 종합 분석 추출
                     parts_gen = response.split("##A##")
                     general_analysis = parts_gen[0].replace("[종합 분석]", "").strip()
-                    
-                    # 시나리오 추출
                     parts_scen = parts_gen[1].split("##B##")
-                    scenario_a = parts_scen[0].strip()
-                    scenario_b = parts_scen[1].strip()
-                    
                     st.session_state.general_analysis = general_analysis
-                    st.session_state.scenarios = {"A": scenario_a, "B": scenario_b}
+                    st.session_state.scenarios = {"A": parts_scen[0].strip(), "B": parts_scen[1].strip()}
                 else:
                     st.session_state.general_analysis = "분석 결과"
                     st.session_state.scenarios = {"A": response, "B": "추가 분석 불가"}
-                    
             except Exception as e:
                 st.error(f"❌ 분석 실패: {str(e)}")
 
-    # 결과 표시 화면
     if st.session_state.scenarios:
-        # 1. 종합 분석 (상단)
+        # [수정] 1. 텍스트 분석 결과 먼저
         st.info(f"📋 **AI 종합 분석**\n\n{st.session_state.general_analysis}")
         
+        # [수정] 2. 그 아래 광고 배치
+        components.html(f"""
+            <div style="display: flex; justify-content: center;">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT_ID}"
+                     crossorigin="anonymous"></script>
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:250px"
+                     data-ad-client="{ADSENSE_CLIENT_ID}"
+                     data-ad-slot="{ADSENSE_SLOT_ID}"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({{}});
+                </script>
+            </div>
+        """, height=260)
+
         st.write("---")
         st.markdown("<h4 style='text-align:center;'>가장 유력한 상황을 선택해주세요</h4>", unsafe_allow_html=True)
         
-        # 2. 시나리오 A / B (가로 배치)
         col1, col2 = st.columns(2)
-        
         with col1:
-            st.markdown(f"""
-            <div class="scenario-box">
-                <div class="scenario-title">🅰️ 가능성 1</div>
-                <div class="scenario-desc">{st.session_state.scenarios.get("A", "")}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="scenario-box"><div class="scenario-title">🅰️ 가능성 1</div><div class="scenario-desc">{st.session_state.scenarios.get("A", "")}</div></div>""", unsafe_allow_html=True)
             if st.button("이게 맞는 듯 (A)", key="btn_a", use_container_width=True):
                 st.session_state.selected_scenario = st.session_state.scenarios.get('A', '')
                 st.session_state.messages = []
                 st.session_state.step = 4
                 st.rerun()
-        
         with col2:
-            st.markdown(f"""
-            <div class="scenario-box">
-                <div class="scenario-title">🅱️ 가능성 2</div>
-                <div class="scenario-desc">{st.session_state.scenarios.get("B", "")}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="scenario-box"><div class="scenario-title">🅱️ 가능성 2</div><div class="scenario-desc">{st.session_state.scenarios.get("B", "")}</div></div>""", unsafe_allow_html=True)
             if st.button("이게 맞는 듯 (B)", key="btn_b", use_container_width=True):
                 st.session_state.selected_scenario = st.session_state.scenarios.get('B', '')
                 st.session_state.messages = []
@@ -515,19 +454,17 @@ elif st.session_state.step == 3.5:
     if st.button("⬅️ 상황 다시 설명하기"): st.session_state.step = 3; st.rerun()
 
 # ==========================================
-# [4단계] 실전 대화 (확률 기반 반응)
+# [4단계] 실전 대화
 # ==========================================
 elif st.session_state.step == 4:
     name = st.session_state.target_name
     st.markdown(f'<h2 style="color: #333; margin-bottom: 30px;">💬 {name}님과의 시뮬레이션</h2>', unsafe_allow_html=True)
     
-    with st.expander("🎯 선택된 상황 보기"):
-        st.info(st.session_state.selected_scenario)
+    with st.expander("🎯 선택된 상황 보기"): st.info(st.session_state.selected_scenario)
     
     for msg in st.session_state.messages:
         avatar = "🔮" if msg["role"] == "assistant" else "👤"
-        with st.chat_message(msg["role"], avatar=avatar):
-            st.markdown(msg["content"])
+        with st.chat_message(msg["role"], avatar=avatar): st.markdown(msg["content"])
     
     if prompt := st.chat_input("메시지를 입력하세요..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -537,35 +474,23 @@ elif st.session_state.step == 4:
             container = st.empty()
             full_response = ""
             try:
-                history_text = ""
-                for m in st.session_state.messages:
-                    role = "나" if m['role'] == 'user' else name
-                    history_text += f"{role}: {m['content']}\n"
-                
                 prompt_content = f"""
-                너는 '{name}'으로 대화하는 AI입니다. 
-                [정보] 성격:{st.session_state.analysis_result}, 상황:{st.session_state.selected_scenario}
-                [사용자 메시지] "{prompt}"
-                
-                [미션]
-                1. 위 정보를 바탕으로 '{name}'이 보일 반응을 1순위/2순위로 예측하세요.
-                2. 각 반응의 확률(%)을 추정하세요.
-                
-                [출력]
+                너는 '{name}'입니다. [정보] 성격:{st.session_state.analysis_result}, 상황:{st.session_state.selected_scenario}
+                [메시지] "{prompt}"
+                [출력] **반드시 줄바꿈을 사용하여 가독성을 높이세요.**
                 ### 🎲 예상 반응
                 * **1순위 (00%)**: "(대사)" - (지문)
                 * **2순위 (00%)**: "(대사)" - (지문)
                 
                 ### 🧠 속마음
-                (2줄 요약)
+                (1줄)
                 
                 ### 💡 공략 팁
-                (1줄 조언)
+                (1줄)
                 
                 ### ⚠️ 주의사항
-                (1줄 경고)
+                (1줄)
                 """
-                
                 response_stream = ai_manager.generate_response(prompt_content, st.session_state.context_image, stream=True)
                 for chunk in response_stream:
                     if hasattr(chunk, 'text') and chunk.text:
@@ -575,7 +500,6 @@ elif st.session_state.step == 4:
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
             except Exception as e: st.error(f"❌ 오류: {str(e)}")
     
-    # 공유 카드
     if len(st.session_state.messages) > 1:
         qr_image = config.get_qr_code(config.SERVICE_URL)
         st.markdown(f"""
