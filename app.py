@@ -192,7 +192,7 @@ if 'selected_scenario' not in st.session_state: st.session_state.selected_scenar
 class MindScanConfig:
     def __init__(self):
         self.SERVICE_URL = "https://mind-scan.ai.kr"
-        self.MODEL_PREFERENCES = ["gemini-2.0-flash"]
+        self.MODEL_PREFERENCES = ["gemini-2.5-flash"]
         self.SAFETY_SETTINGS = [{"category": c, "threshold": "BLOCK_NONE"} for c in ["HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT"]]
         
     def get_qr_code(self, url: str) -> str:
@@ -216,7 +216,7 @@ class AIModelManager:
         try:
             if "GOOGLE_API_KEY" in st.secrets:
                 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-                return genai.GenerativeModel("gemini-2.0-flash", safety_settings=_self.config.SAFETY_SETTINGS), "gemini-1.5-flash"
+                return genai.GenerativeModel("gemini-2.5-flash", safety_settings=_self.config.SAFETY_SETTINGS), "gemini-1.5-flash"
             return None, "No API Key"
         except Exception as e: return None, str(e)
     
@@ -659,3 +659,4 @@ else:
             st.write("---")
             
     
+
